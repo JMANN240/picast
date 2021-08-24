@@ -9,15 +9,24 @@ $.ajax({
     socket = io.connect(res.socketio_host + ':' + res.port);
 
     socket.on("offer", async (desc) => {
-      console.log("offer");
+      console.log("We got an offer");
+      await pc.setRemoteDescription(desc);
+      await pc.setLocalDescription(await pc.createAnswer());
+      console.log("Sending an answer");
+      socket.emit("answer", pc.localDescription);
+      pc.ontrack = (e) => {
+        remote_video.srcObject = e.streams[0];
+      }
     });
     
     socket.on("answer", async (desc) => {
-      console.log("answer");
+      console.log("We got an answer");
+      await pc.setRemoteDescription(desc);
     });
     
     socket.on("candidate", async (cnd) => {
-      console.log("candidate");
+      console.log("We got a candidate");
+      pc.addIceCandidate(cnd);
     });
   }
 });
@@ -26,9 +35,22 @@ var pc = new RTCPeerConnection({
   iceServers: [{urls: 'stun:stun.l.google.com:19302'}]
 });
 
-pc.onicecandidate = ({cnd}) => {
-  console.log(cnd);
-  socket.emit('candidate', cnd);
+pc.onicecandidate = (e) => {
+  console.log("Created a candidate");
+  if (e.candidate) {
+    socket.emit('candidate', e.candidate);
+  }
+}
+
+pc.onnegotiationneeded = async () => {
+  try {
+    console.log("Time to negotiate");
+    await pc.setLocalDescription(await pc.createOffer());
+    socket.emit('offer', pc.localDescription);
+    console.log("Sending an offer");
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 pc.ontrack = (e) => {
@@ -38,7 +60,7 @@ pc.ontrack = (e) => {
 
 var start = async () => {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({video: true});
+    const stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true});
     stream.getTracks().forEach((track) => {
       pc.addTrack(track, stream)
     });
