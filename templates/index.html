@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<script defer src="{{url_for('static', filename='js/index.js')}}"></script>
+{% endblock %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+<video id='self-video' autoplay></video>
+<video id='remote-video' autoplay></video>
+<button id="connectButton" name="connectButton" class="buttonleft">
+    Connect
+</button>
+<button id="disconnectButton" name="disconnectButton" class="buttonright" disabled>
+    Disconnect
+</button>
+{% endblock %}
