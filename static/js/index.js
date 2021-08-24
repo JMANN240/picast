@@ -2,7 +2,26 @@ var self_video = document.getElementById('self-video');
 var remote_video = document.getElementById('remote-video');
 var connect_button = document.getElementById('connectButton');
 
-var socket = io.connect("10.12.224.5:8000");
+$.ajax({
+  type: 'GET',
+  url: '/settings',
+  success: (res) => {
+    socket = io.connect(res.socketio_host + ':' + res.port);
+
+    socket.on("offer", async (desc) => {
+      console.log("offer");
+    });
+    
+    socket.on("answer", async (desc) => {
+      console.log("answer");
+    });
+    
+    socket.on("candidate", async (cnd) => {
+      console.log("candidate");
+    });
+  }
+});
+
 var pc = new RTCPeerConnection({
   iceServers: [{urls: 'stun:stun.l.google.com:19302'}]
 });
@@ -16,18 +35,6 @@ pc.ontrack = (e) => {
   if (remote_video.srcObject) return;
   remote_video.srcObject = e.streams[0];
 }
-
-socket.on("offer", async (desc) => {
-
-});
-
-socket.on("answer", async (desc) => {
-
-});
-
-socket.on("candidate", async (cnd) => {
-
-});
 
 var start = async () => {
   try {

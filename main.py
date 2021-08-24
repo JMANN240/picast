@@ -10,6 +10,10 @@ socketio = SocketIO(app)
 with open("settings.json", "r") as settings_file:
     settings = json.load(settings_file)
 
+@app.route('/settings')
+def get_settings():
+    return settings
+
 @app.route('/')
 def index():
     return render_template('index.html')
