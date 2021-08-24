@@ -1,6 +1,10 @@
-var self_video = document.getElementById('self-video');
-var remote_video = document.getElementById('remote-video');
-var connect_button = document.getElementById('connectButton');
+var video = document.getElementById('video');
+var share_screen_button = document.getElementById('share-screen-button');
+var share_camera_button = document.getElementById('share-camera-button');
+var watch_button = document.getElementById('watch-button');
+var room_id_input = document.getElementById('room-id');
+
+var connections = {};
 
 $.ajax({
   type: 'GET',
@@ -8,66 +12,98 @@ $.ajax({
   success: (res) => {
     socket = io.connect(res.socketio_host + ':' + res.port);
 
-    socket.on("offer", async (desc) => {
-      console.log("We got an offer");
-      await pc.setRemoteDescription(desc);
+    socket.on("offer", async (offer_event) => {
+      console.log("We got an offer from", offer_event.id);
+
+      var pc = new RTCPeerConnection(config);
+      connections[offer_event.id] = pc;
+
+      pc.ontrack = (video_event) => {
+        console.log("Setting remote video");
+        video.srcObject = video_event.streams[0];
+      };
+      
+      await pc.setRemoteDescription(offer_event.offer);
       await pc.setLocalDescription(await pc.createAnswer());
-      console.log("Sending an answer");
-      socket.emit("answer", pc.localDescription);
-      pc.ontrack = (e) => {
-        remote_video.srcObject = e.streams[0];
+
+      console.log("Sending an answer to", offer_event.id);
+      socket.emit("answer", socket.id, pc.localDescription);
+
+      pc.onicecandidate = (candidate_event) => {
+        if (candidate_event.candidate) {
+          console.log("sending candidate to", offer_event.id);
+          socket.emit("candidate", socket.id, candidate_event.candidate);
+        }
       }
     });
     
-    socket.on("answer", async (desc) => {
-      console.log("We got an answer");
-      await pc.setRemoteDescription(desc);
+    socket.on("answer", (answer_event) => {
+      console.log("We got an answer from", answer_event.id);
+      connections[answer_event.id].setRemoteDescription(answer_event.answer);
     });
     
-    socket.on("candidate", async (cnd) => {
-      console.log("We got a candidate");
-      pc.addIceCandidate(cnd);
+    socket.on("candidate", (candidate_event) => {
+      console.log("We got a candidate from", candidate_event.id);
+      if (candidate_event.cnd) {
+        connections[candidate_event.id].addIceCandidate(new RTCIceCandidate(candidate_event.cnd));
+      }
+    });
+
+    socket.on("watcher", async (watcher_id) => {
+      console.log("new watcher:", watcher_id);
+
+      var pc = new RTCPeerConnection(config);
+      connections[watcher_id] = pc;
+
+      var stream = video.srcObject;
+
+      stream.getTracks().forEach((track) => {
+        console.log("Adding tracks to the peer", watcher_id);
+        pc.addTrack(track, stream);
+      });
+
+      pc.onicecandidate = (candidate_event) => {
+        if (candidate_event.candidate) {
+          console.log("sending candidate to", watcher_id);
+          socket.emit("candidate", socket.id, candidate_event.candidate);
+        }
+      }
+
+      await pc.setLocalDescription(await pc.createOffer());
+      console.log("sending an offer");
+      socket.emit("offer", socket.id, pc.localDescription);
     });
   }
 });
 
-var pc = new RTCPeerConnection({
+var config = {
   iceServers: [{urls: 'stun:stun.l.google.com:19302'}]
-});
+};
 
-pc.onicecandidate = (e) => {
-  console.log("Created a candidate");
-  if (e.candidate) {
-    socket.emit('candidate', e.candidate);
-  }
-}
-
-pc.onnegotiationneeded = async () => {
-  try {
-    console.log("Time to negotiate");
-    await pc.setLocalDescription(await pc.createOffer());
-    socket.emit('offer', pc.localDescription);
-    console.log("Sending an offer");
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-pc.ontrack = (e) => {
-  if (remote_video.srcObject) return;
-  remote_video.srcObject = e.streams[0];
-}
-
-var start = async () => {
+var share_screen = async () => {
   try {
     const stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true});
-    stream.getTracks().forEach((track) => {
-      pc.addTrack(track, stream)
-    });
-    self_video.srcObject = stream;
+    video.srcObject = stream;
+    room_id_input.value = socket.id;
   } catch (err) {
     console.error(err);
   }
 }
 
-connect_button.addEventListener('click', start);
+var share_camera = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
+    video.srcObject = stream;
+    room_id_input.value = socket.id;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+var watch = () => {
+  socket.emit("watcher", socket.id);
+}
+
+share_screen_button.addEventListener('click', share_screen);
+share_camera_button.addEventListener('click', share_camera);
+watch_button.addEventListener('click', watch);

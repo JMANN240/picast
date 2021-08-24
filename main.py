@@ -18,20 +18,29 @@ def get_settings():
 def index():
     return render_template('index.html')
 
+@app.route('/old')
+def old():
+    return render_template('old.html')
+
 @socketio.on('offer')
-def on_offer(offer):
-    print(f"got offer: {offer}")
-    socketio.emit('offer', offer, include_self=False)
+def on_offer(id, offer):
+    print(f"got offer")
+    socketio.emit('offer', {"id": id, "offer": offer}, include_self=False)
 
 @socketio.on('answer')
-def on_answer(answer):
-    print(f"got answer: {answer}")
-    socketio.emit('answer', answer, include_self=False)
+def on_answer(id, answer):
+    print(f"got answer")
+    socketio.emit('answer', {"id": id, "answer": answer}, include_self=False)
 
 @socketio.on('candidate')
-def on_candidate(cnd):
-    print(f"got candidate: {cnd}")
-    socketio.emit('candidate', cnd, include_self=False)
+def on_candidate(id, cnd):
+    print(f"got candidate")
+    socketio.emit('candidate', {"id": id, "cnd": cnd}, include_self=False)
+
+@socketio.on('watcher')
+def on_watcher(id):
+    print(f"got watcher: {id}")
+    socketio.emit('watcher', id, include_self=False)
 
 if (__name__ == '__main__'):
     socketio.run(app, host=settings.get("flask_host", "0.0.0.0"), 

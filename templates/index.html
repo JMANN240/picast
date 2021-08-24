@@ -8,12 +8,9 @@
 {% endblock %}
 
 {% block content %}
-<video id='self-video' autoplay></video>
-<video id='remote-video' autoplay></video>
-<button id="connectButton" name="connectButton" class="buttonleft">
-    Connect
-</button>
-<button id="disconnectButton" name="disconnectButton" class="buttonright" disabled>
-    Disconnect
-</button>
+<video id='video' autoplay></video>
+<button id="share-screen-button">Share Screen</button>
+<button id="share-camera-button">Share Camera</button>
+<button id="watch-button">Watch</button>
+<input type="text" placeholder="Room ID" name="room-id" id="room-id">
 {% endblock %}
