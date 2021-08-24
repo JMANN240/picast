@@ -9,8 +9,10 @@
 
 {% block content %}
 <video id='video' autoplay playsInline></video>
-<button id="share-screen-button">Share Screen</button>
-<button id="share-camera-button">Share Camera</button>
-<button id="watch-button">Watch</button>
-<input type="text" placeholder="Room ID" name="room-id" id="room-id">
+<div id="buttons-div">
+    <button id="share-camera-button">Share Camera</button>
+    <button id="share-screen-button">Share Screen</button>
+    <button id="watch-button">Watch</button>
+    <input type="text" placeholder="Room ID" name="room-id" id="room-id">
+</div>
 {% endblock %}
