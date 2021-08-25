@@ -1,8 +1,12 @@
 var video = document.getElementById('video');
 var share_screen_button = document.getElementById('share-screen-button');
-var share_camera_button = document.getElementById('share-camera-button');
 var watch_button = document.getElementById('watch-button');
 var room_id_input = document.getElementById('room-id');
+var copy_link_button = document.getElementById('copy-link-button');
+var link_input = document.getElementById("link");
+var query_string = window.location.search;
+var url_params = new URLSearchParams(query_string);
+room_id_input.value = url_params.get('room_id');
 
 var connections = {};
 
@@ -85,16 +89,7 @@ var share_screen = async () => {
     const stream = await navigator.mediaDevices.getDisplayMedia({video: true, audio: true});
     video.srcObject = stream;
     room_id_input.value = socket.id;
-  } catch (err) {
-    console.error(err);
-  }
-}
-
-var share_camera = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({video: true, audio: true});
-    video.srcObject = stream;
-    room_id_input.value = socket.id;
+    link_input.value = "picast.ejrobotics.com?room_id=" + socket.id;
   } catch (err) {
     console.error(err);
   }
@@ -104,6 +99,13 @@ var watch = () => {
   socket.emit("watcher", room_id_input.value, socket.id);
 }
 
+var copy_link = () => {
+  link_input.focus();
+  link_input.select();
+  document.execCommand("copy");
+
+}
+
 share_screen_button.addEventListener('click', share_screen);
-share_camera_button.addEventListener('click', share_camera);
 watch_button.addEventListener('click', watch);
+copy_link_button.addEventListener('click', copy_link);

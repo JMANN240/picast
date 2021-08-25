@@ -18,7 +18,6 @@ body {
     width: 95vw;
     height: 90vh;
     outline: 1px solid white;
-    transform: rotateY(180deg);
 }
 
 #buttons-div { 
