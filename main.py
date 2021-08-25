@@ -18,9 +18,9 @@ def get_settings():
 def index():
     return render_template('index.html')
 
-@app.route('/old')
-def old():
-    return render_template('old.html')
+@app.route('/mirror')
+def mirror():
+    return render_template('mirror.html')
 
 @socketio.on('offer')
 def on_offer(to_id, from_id, offer):

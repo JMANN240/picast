@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<script defer src="{{url_for('static', filename='js/mirror.js')}}"></script>
+{% endblock %}
+
+{% block head %}
+{% endblock %}
+
+{% block content %}
+<video id='video' autoplay playsinline></video>
+{% endblock %}
