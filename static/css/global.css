@@ -18,6 +18,7 @@ body {
     width: 95vw;
     height: 90vh;
     outline: 1px solid white;
+    background: #202020;
 }
 
 #buttons-div { 
